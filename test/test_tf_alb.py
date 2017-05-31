@@ -1,7 +1,10 @@
-import unittest
 import os
-import time
+import unittest
+from string import ascii_letters, digits
 from subprocess import check_call, check_output
+
+from hypothesis import given, settings
+from hypothesis.strategies import text
 
 cwd = os.getcwd()
 
@@ -11,10 +14,10 @@ class TestTFALB(unittest.TestCase):
     def setUp(self):
         check_call(['terraform', 'get', 'test/infra'])
 
-    def test_create_alb(self):
+    @given(text(alphabet=ascii_letters + digits, min_size=24, max_size=36))
+    @settings(max_examples=20, timeout=15)
+    def test_create_alb(self, name):
         # Given
-        # ms since epoch
-        name = 'test-' + str(int(time.time() * 1000))
         subnet_ids = (
             "[\"subnet-b46032ec\", \"subnet-ca4311ef\", \"subnet-ba881221\"]"
         )
@@ -50,7 +53,7 @@ class TestTFALB(unittest.TestCase):
     subnets.416118645:          "subnet-b46032ec"
     vpc_id:                     "<computed>"
     zone_id:                    "<computed>"
-        """.format(name=name).strip() in output
+        """.format(name=name[:32]).strip() in output
 
     def test_create_listener(self):
         # Given
