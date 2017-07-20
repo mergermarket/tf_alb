@@ -1,5 +1,5 @@
 resource "aws_alb" "alb" {
-  name            = "${join("", slice(split("", var.name), 0, length(var.name) > 31 ? 32 : length(var.name)))}"
+  name            = "${replace(replace(var.name, "/(.{0,32}).*/", "$1"), "/^-|-$/", "")}"
   internal        = "${var.internal}"
   security_groups = ["${concat(list(aws_security_group.default.id), var.extra_security_groups)}"]
   subnets         = "${var.subnet_ids}"

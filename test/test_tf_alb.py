@@ -3,10 +3,16 @@ import unittest
 from string import ascii_letters, digits
 from subprocess import check_call, check_output
 
-from hypothesis import given, settings
+from hypothesis import example, given
 from hypothesis.strategies import text
 
-cwd = os.getcwd()
+
+def filter_invalid_hyphens(name):
+    return (
+        len(name.replace('-', '')) > 0
+        and not name.startswith('-')
+        and not name.endswith('-')
+    )
 
 
 class TestTFALB(unittest.TestCase):
@@ -14,8 +20,10 @@ class TestTFALB(unittest.TestCase):
     def setUp(self):
         check_call(['terraform', 'get', 'test/infra'])
 
-    @given(text(alphabet=ascii_letters + digits, min_size=24, max_size=36))
-    @settings(max_examples=20, timeout=15)
+    @given(text(
+        alphabet=ascii_letters+digits+'-', min_size=10, average_size=34,
+    ).filter(filter_invalid_hyphens))
+    @example('a'*31 + '-' + 'b'*10)
     def test_create_alb(self, name):
         # Given
         subnet_ids = (
@@ -53,7 +61,7 @@ class TestTFALB(unittest.TestCase):
     subnets.416118645:          "subnet-b46032ec"
     vpc_id:                     "<computed>"
     zone_id:                    "<computed>"
-        """.format(name=name[:32]).strip() in output
+        """.format(name=name[:32].strip('-')).strip() in output
 
     def test_create_listener(self):
         # Given
