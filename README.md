@@ -1,6 +1,8 @@
 AWS ALB terraform module
 ======================================
 
+[![Build Status](https://travis-ci.org/mergermarket/tf_alb.svg?branch=master)](https://travis-ci.org/mergermarket/tf_alb)
+
 This module creates AWS Application Load Balancer as per provided parameters.
 
 As some more resources - security-group and listener are required when creating AWS ALB, these are also created (based on passed parameters).
