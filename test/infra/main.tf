@@ -10,6 +10,21 @@ module "alb_test" {
   default_target_group_arn = "${var.default_target_group_arn}"
 }
 
+module "alb_test_with_tags" {
+  source = "../.."
+
+  # required
+  name                     = "${var.name}"
+  vpc_id                   = "${var.vpc_id}"
+  subnet_ids               = "${var.subnet_ids}"
+  certificate_arn          = "${var.certificate_arn}"
+  default_target_group_arn = "${var.default_target_group_arn}"
+  tags {
+    component = "component"
+    service   = "service"
+  }
+}
+
 # configure provider to not try too hard talking to AWS API
 provider "aws" {
   skip_credentials_validation = true

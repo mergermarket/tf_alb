@@ -36,3 +36,8 @@ variable "extra_security_groups" {
   type        = "list"
   default     = [""]
 }
+
+variable "tags" {
+  description = "A map of tags to add to all resources"
+  default     = {}
+}

@@ -17,7 +17,8 @@ Module Input Variables
 - `certificate_arn` - (string) - **REQUIRED** - The ARN of the SSL server certificate. Exactly one certificate is required if the protocol is HTTPS
 - `default_target_group_arn` - (string) - **REQUIRED** - The ARN of the default Target Group to which to route traffic
 - `internal` - (bool) - OPTIONAL - If true, the ALB will be internal; default: `true`
-- `extra_security_groups` - list - OPTIONAL - Extra security groups to be attached to ALB
+- `extra_security_groups` - (list) - OPTIONAL - Extra security groups to be attached to ALB
+- `tags` - (map) - OPTIONAL - Map of tags to be applied to the resources (just to ALB as ALB Listeners cannot be tagged); default: `{}` (empty - no tags)
 
 Usage
 -----

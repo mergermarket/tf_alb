@@ -3,6 +3,7 @@ resource "aws_alb" "alb" {
   internal        = "${var.internal}"
   security_groups = ["${concat(list(aws_security_group.default.id), var.extra_security_groups)}"]
   subnets         = "${var.subnet_ids}"
+  tags            = "${var.tags}"
 }
 
 resource "aws_alb_listener" "https" {
