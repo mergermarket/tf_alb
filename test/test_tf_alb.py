@@ -63,6 +63,49 @@ class TestTFALB(unittest.TestCase):
     zone_id:                    "<computed>"
         """.format(name=name[:32].strip('-')).strip() in output
 
+    def test_create_alb_with_tags(self):
+        # Given
+        subnet_ids = (
+            "[\"subnet-b46032ec\", \"subnet-ca4311ef\", \"subnet-ba881221\"]"
+        )
+
+        # When
+        output = check_output([
+            'terraform',
+            'plan',
+            '-var', 'name=albalbalb',
+            '-var', 'vpc_id=foobar',
+            '-var', 'subnet_ids={}'.format(subnet_ids),
+            '-var', 'certificate_arn=foobar',
+            '-var', 'default_target_group_arn=foobar',
+            '-target=module.alb_test_with_tags',
+            '-no-color',
+            'test/infra'
+        ]).decode('utf-8')
+
+        # Then
+        assert """
++ module.alb_test_with_tags.aws_alb.alb
+    arn:                        "<computed>"
+    arn_suffix:                 "<computed>"
+    dns_name:                   "<computed>"
+    enable_deletion_protection: "false"
+    idle_timeout:               "60"
+    internal:                   "true"
+    ip_address_type:            "<computed>"
+    name:                       "albalbalb"
+    security_groups.#:          "<computed>"
+    subnets.#:                  "3"
+        """.strip() in output
+
+        assert """
+    tags.%:                     "2"
+    tags.component:             "component"
+    tags.service:               "service"
+    vpc_id:                     "<computed>"
+    zone_id:                    "<computed>"
+        """.strip() in output
+
     def test_create_listener(self):
         # Given
         certificate_arn = (
