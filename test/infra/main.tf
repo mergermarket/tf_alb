@@ -6,7 +6,7 @@ module "alb_test" {
   name                     = "${var.name}"
   vpc_id                   = "${var.vpc_id}"
   subnet_ids               = "${var.subnet_ids}"
-  certificate_arn          = "${var.certificate_arn}"
+  certificate_domain_name  = "${var.certificate_domain_name}"
   default_target_group_arn = "${var.default_target_group_arn}"
 }
 
@@ -17,8 +17,9 @@ module "alb_test_with_tags" {
   name                     = "${var.name}"
   vpc_id                   = "${var.vpc_id}"
   subnet_ids               = "${var.subnet_ids}"
-  certificate_arn          = "${var.certificate_arn}"
+  certificate_domain_name  = "${var.certificate_domain_name}"
   default_target_group_arn = "${var.default_target_group_arn}"
+
   tags {
     component = "component"
     service   = "service"
@@ -47,6 +48,8 @@ variable "subnet_ids" {
   type = "list"
 }
 
-variable "certificate_arn" {}
+variable "certificate_domain_name" {
+  default = "dummydomain.com"
+}
 
 variable "default_target_group_arn" {}
