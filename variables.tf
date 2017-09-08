@@ -14,8 +14,8 @@ variable "subnet_ids" {
   type        = "list"
 }
 
-variable "certificate_arn" {
-  description = "The ARN of the SSL server certificate. Exactly one certificate is required if the protocol is HTTPS"
+variable "certificate_domain_name" {
+  description = "Domain name as used in AWS ACM Certificate - this will be used by Terraform Data Source to resolve the actual certificate ARN"
   type        = "string"
 }
 
