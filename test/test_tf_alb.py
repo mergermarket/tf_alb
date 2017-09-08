@@ -1,4 +1,3 @@
-import os
 import unittest
 from string import ascii_letters, digits
 from subprocess import check_call, check_output
@@ -37,8 +36,8 @@ class TestTFALB(unittest.TestCase):
             '-var', 'name={}'.format(name),
             '-var', 'vpc_id=foobar',
             '-var', 'subnet_ids={}'.format(subnet_ids),
-            '-var', 'certificate_arn=foobar',
             '-var', 'default_target_group_arn=foobar',
+            '-target=module.alb_test',
             '-no-color',
             'test/infra'
         ]).decode('utf-8')
@@ -76,7 +75,6 @@ class TestTFALB(unittest.TestCase):
             '-var', 'name=albalbalb',
             '-var', 'vpc_id=foobar',
             '-var', 'subnet_ids={}'.format(subnet_ids),
-            '-var', 'certificate_arn=foobar',
             '-var', 'default_target_group_arn=foobar',
             '-target=module.alb_test_with_tags',
             '-no-color',
@@ -108,10 +106,6 @@ class TestTFALB(unittest.TestCase):
 
     def test_create_listener(self):
         # Given
-        certificate_arn = (
-            "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234"
-            "-1234-123456789012"
-        )
         default_target_group_arn = (
             "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/"
             "my-targets/73e2d6bc24d8a067"
@@ -124,10 +118,11 @@ class TestTFALB(unittest.TestCase):
             '-var', 'name=foobar',
             '-var', 'vpc_id=foobar',
             '-var', 'subnet_ids=["foo", "bar", "foo"]',
-            '-var', 'certificate_arn={}'.format(certificate_arn),
+            '-var', 'certificate_domain_name=foobar.com',
             '-var', 'default_target_group_arn={}'.format(
                 default_target_group_arn
             ),
+            '-target=module.alb_test',
             '-no-color',
             'test/infra'
         ]).decode('utf-8')
@@ -136,7 +131,7 @@ class TestTFALB(unittest.TestCase):
         assert """
 + module.alb_test.aws_alb_listener.https
     arn:                               "<computed>"
-    certificate_arn:                   "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+    certificate_arn:                   "${module.aws_acm_certificate_arn.arn}"
     default_action.#:                  "1"
     default_action.0.target_group_arn: "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"
     default_action.0.type:             "forward"
@@ -157,8 +152,9 @@ class TestTFALB(unittest.TestCase):
             '-var', 'name=foo',
             '-var', 'vpc_id={}'.format(vpc_id),
             '-var', 'subnet_ids=["foo", "bar", "foo"]',
-            '-var', 'certificate_arn=foobar',
+            '-var', 'certificate_domain_name=foobar.com',
             '-var', 'default_target_group_arn=foobar',
+            '-target=module.alb_test',
             '-no-color',
             'test/infra'
         ]).decode('utf-8')
