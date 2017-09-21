@@ -47,7 +47,6 @@ class TestTFALB(unittest.TestCase):
 + module.alb_test.aws_alb.alb
     access_logs.#:              "1"
     access_logs.0.enabled:      "false"
-    access_logs.0.prefix:       "{name}"
     arn:                        "<computed>"
     arn_suffix:                 "<computed>"
     dns_name:                   "<computed>"
@@ -55,7 +54,7 @@ class TestTFALB(unittest.TestCase):
     idle_timeout:               "60"
     internal:                   "true"
     ip_address_type:            "<computed>"
-    name:                       "{compact_name}"
+    name:                       "{name}"
     security_groups.#:          "<computed>"
     subnets.#:                  "3"
     subnets.2009589885:         "subnet-ca4311ef"
@@ -64,8 +63,7 @@ class TestTFALB(unittest.TestCase):
     vpc_id:                     "<computed>"
     zone_id:                    "<computed>"
         """.format(
-                compact_name=name[:32].strip('-'),
-                name=name
+                name=name[:32].strip('-'),
             ).strip() in output
 
     def test_create_alb_with_tags(self):
@@ -92,7 +90,6 @@ class TestTFALB(unittest.TestCase):
 + module.alb_test_with_tags.aws_alb.alb
     access_logs.#:              "1"
     access_logs.0.enabled:      "false"
-    access_logs.0.prefix:       "albalbalb"
     arn:                        "<computed>"
     arn_suffix:                 "<computed>"
     dns_name:                   "<computed>"
