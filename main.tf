@@ -12,9 +12,9 @@ resource "aws_alb" "alb" {
   tags            = "${var.tags}"
 
   access_logs {
-    bucket = "${var.access_logs_bucket}"
-    prefix = "${var.name}"
-    enable = "${var.access_logs_enabled}"
+    bucket  = "${var.access_logs_bucket}"
+    prefix  = "${var.name}"
+    enabled = "${var.access_logs_enabled}"
   }
 }
 

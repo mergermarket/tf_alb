@@ -45,6 +45,9 @@ class TestTFALB(unittest.TestCase):
         # Then
         assert """
 + module.alb_test.aws_alb.alb
+    access_logs.#:              "1"
+    access_logs.0.enabled:      "false"
+    access_logs.0.prefix:       "{name}"
     arn:                        "<computed>"
     arn_suffix:                 "<computed>"
     dns_name:                   "<computed>"
@@ -52,7 +55,7 @@ class TestTFALB(unittest.TestCase):
     idle_timeout:               "60"
     internal:                   "true"
     ip_address_type:            "<computed>"
-    name:                       "{name}"
+    name:                       "{compact_name}"
     security_groups.#:          "<computed>"
     subnets.#:                  "3"
     subnets.2009589885:         "subnet-ca4311ef"
@@ -60,7 +63,10 @@ class TestTFALB(unittest.TestCase):
     subnets.416118645:          "subnet-b46032ec"
     vpc_id:                     "<computed>"
     zone_id:                    "<computed>"
-        """.format(name=name[:32].strip('-')).strip() in output
+        """.format(
+                compact_name=name[:32].strip('-'),
+                name=name
+            ).strip() in output
 
     def test_create_alb_with_tags(self):
         # Given
@@ -84,6 +90,9 @@ class TestTFALB(unittest.TestCase):
         # Then
         assert """
 + module.alb_test_with_tags.aws_alb.alb
+    access_logs.#:              "1"
+    access_logs.0.enabled:      "false"
+    access_logs.0.prefix:       "albalbalb"
     arn:                        "<computed>"
     arn_suffix:                 "<computed>"
     dns_name:                   "<computed>"
