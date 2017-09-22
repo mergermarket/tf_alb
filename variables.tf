@@ -37,16 +37,6 @@ variable "extra_security_groups" {
   default     = [""]
 }
 
-variable "access_logs_bucket" {
-  description = "An S3 bucket to send access logs to"
-  default     = ""
-}
-
-variable "access_logs_enabled" {
-  description = "Whether or not to enable access logs"
-  default     = false
-}
-
 variable "tags" {
   description = "A map of tags to add to all resources"
   default     = {}

@@ -10,11 +10,6 @@ resource "aws_alb" "alb" {
   security_groups = ["${concat(list(aws_security_group.default.id), var.extra_security_groups)}"]
   subnets         = "${var.subnet_ids}"
   tags            = "${var.tags}"
-
-  access_logs {
-    bucket  = "${var.access_logs_bucket}"
-    enabled = "${var.access_logs_enabled}"
-  }
 }
 
 resource "aws_alb_listener" "https" {
