@@ -51,3 +51,9 @@ variable "tags" {
   description = "A map of tags to add to all resources"
   default     = {}
 }
+
+variable "idle_timeout" {
+  description = "The time in seconds that the connection is allowed to be idle."
+  type        = "string"
+  default     = "60"
+}

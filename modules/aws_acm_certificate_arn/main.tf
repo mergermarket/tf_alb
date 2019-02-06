@@ -5,7 +5,7 @@ data "aws_acm_certificate" "cert" {
 
 variable "domain_name" {
   description = ""
-  type = "string"
+  type        = "string"
 }
 
 output "arn" {
