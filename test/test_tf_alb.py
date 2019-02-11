@@ -1,9 +1,8 @@
+import re
 import unittest
+
 from string import ascii_letters, digits
 from subprocess import check_call, check_output
-
-from hypothesis import example, given
-from hypothesis.strategies import text
 
 
 def filter_invalid_hyphens(name):
@@ -14,16 +13,39 @@ def filter_invalid_hyphens(name):
     )
 
 
+def template_to_re(t):
+    seen = dict()
+
+    def pattern(placeholder, open_curly, close_curly, text, whitespace):
+        if text is not None:
+            return re.escape(text)
+        elif whitespace is not None:
+            return r'\s+'
+        elif open_curly is not None:
+            return r'\{'
+        elif close_curly is not None:
+            return r'\}'
+        elif seen.get(placeholder):
+            return '(?P={})'.format(placeholder)
+        else:
+            seen[placeholder] = True
+            return '(?P<{}>.*?)'.format(placeholder)
+
+    return "".join([
+        pattern(*match.groups())
+        for match in re.finditer(
+            r'{([\w_]+)}|(\{\{)|(\}\})|([^{}\s]+)|(\s+)', t
+        )
+    ])
+
+
 class TestTFALB(unittest.TestCase):
 
     def setUp(self):
+        check_call(['terraform', 'init', 'test/infra'])
         check_call(['terraform', 'get', 'test/infra'])
 
-    @given(text(
-        alphabet=ascii_letters+digits+'-', min_size=10, average_size=34,
-    ).filter(filter_invalid_hyphens))
-    @example('a'*31 + '-' + 'b'*10)
-    def test_create_alb(self, name):
+    def test_create_alb(self):
         # Given
         subnet_ids = (
             "[\"subnet-b46032ec\", \"subnet-ca4311ef\", \"subnet-ba881221\"]"
@@ -33,7 +55,7 @@ class TestTFALB(unittest.TestCase):
         output = check_output([
             'terraform',
             'plan',
-            '-var', 'name={}'.format(name),
+            '-var', 'name=super-nice-alb-name',
             '-var', 'vpc_id=foobar',
             '-var', 'subnet_ids={}'.format(subnet_ids),
             '-var', 'default_target_group_arn=foobar',
@@ -43,28 +65,28 @@ class TestTFALB(unittest.TestCase):
         ]).decode('utf-8')
 
         # Then
-        assert """
-+ module.alb_test.aws_alb.alb
-    access_logs.#:              "1"
-    access_logs.0.enabled:      "false"
-    arn:                        "<computed>"
-    arn_suffix:                 "<computed>"
-    dns_name:                   "<computed>"
-    enable_deletion_protection: "false"
-    idle_timeout:               "60"
-    internal:                   "true"
-    ip_address_type:            "<computed>"
-    name:                       "{name}"
-    security_groups.#:          "<computed>"
-    subnets.#:                  "3"
-    subnets.2009589885:         "subnet-ca4311ef"
-    subnets.3117197332:         "subnet-ba881221"
-    subnets.416118645:          "subnet-b46032ec"
-    vpc_id:                     "<computed>"
-    zone_id:                    "<computed>"
-        """.format(
-                name=name[:32].strip('-'),
-            ).strip() in output
+        assert re.search(template_to_re("""
+      access_logs.#:                         "1"
+      access_logs.0.enabled:                 "false"
+      arn:                                   <computed>
+      arn_suffix:                            <computed>
+      dns_name:                              <computed>
+      enable_deletion_protection:            "false"
+      enable_http2:                          "true"
+      idle_timeout:                          "60"
+      internal:                              "true"
+      ip_address_type:                       <computed>
+      load_balancer_type:                    "application"
+      name:                                  "super-nice-alb-name"
+      security_groups.#:                     <computed>
+      subnet_mapping.#:                      <computed>
+      subnets.#:                             "3"
+      subnets.2009589885:                    "subnet-ca4311ef"
+      subnets.3117197332:                    "subnet-ba881221"
+      subnets.416118645:                     "subnet-b46032ec"
+      vpc_id:                                <computed>
+      zone_id:                               <computed>
+        """.strip()), output)
 
     def test_create_alb_with_tags(self):
         # Given
@@ -86,29 +108,31 @@ class TestTFALB(unittest.TestCase):
         ]).decode('utf-8')
 
         # Then
-        assert """
-+ module.alb_test_with_tags.aws_alb.alb
-    access_logs.#:              "1"
-    access_logs.0.enabled:      "false"
-    arn:                        "<computed>"
-    arn_suffix:                 "<computed>"
-    dns_name:                   "<computed>"
-    enable_deletion_protection: "false"
-    idle_timeout:               "60"
-    internal:                   "true"
-    ip_address_type:            "<computed>"
-    name:                       "albalbalb"
-    security_groups.#:          "<computed>"
-    subnets.#:                  "3"
-        """.strip() in output
-
-        assert """
-    tags.%:                     "2"
-    tags.component:             "component"
-    tags.service:               "service"
-    vpc_id:                     "<computed>"
-    zone_id:                    "<computed>"
-        """.strip() in output
+        assert re.search(template_to_re("""
+      access_logs.#:                         "1"
+      access_logs.0.enabled:                 "false"
+      arn:                                   <computed>
+      arn_suffix:                            <computed>
+      dns_name:                              <computed>
+      enable_deletion_protection:            "false"
+      enable_http2:                          "true"
+      idle_timeout:                          "60"
+      internal:                              "true"
+      ip_address_type:                       <computed>
+      load_balancer_type:                    "application"
+      name:                                  "albalbalb"
+      security_groups.#:                     <computed>
+      subnet_mapping.#:                      <computed>
+      subnets.#:                             "3"
+      subnets.2009589885:                    "subnet-ca4311ef"
+      subnets.3117197332:                    "subnet-ba881221"
+      subnets.416118645:                     "subnet-b46032ec"
+      tags.%:                                "2"
+      tags.component:                        "component"
+      tags.service:                          "service"
+      vpc_id:                                <computed>
+      zone_id:                               <computed>
+        """.strip()), output)
 
     def test_create_listener(self):
         # Given
@@ -134,18 +158,18 @@ class TestTFALB(unittest.TestCase):
         ]).decode('utf-8')
 
         # Then
-        assert """
-+ module.alb_test.aws_alb_listener.https
-    arn:                               "<computed>"
-    certificate_arn:                   "${module.aws_acm_certificate_arn.arn}"
-    default_action.#:                  "1"
-    default_action.0.target_group_arn: "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"
-    default_action.0.type:             "forward"
-    load_balancer_arn:                 "${aws_alb.alb.arn}"
-    port:                              "443"
-    protocol:                          "HTTPS"
-    ssl_policy:                        "<computed>"
-        """.strip() in output # noqa
+        assert re.search(template_to_re("""
+      default_action.#:                      "1"
+      default_action.0.order:                <computed>
+      default_action.0.target_group_arn:     "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"
+      default_action.0.type:                 "forward"
+        """.strip()), output)  # noqa
+
+        assert re.search(template_to_re("""
+      port:                                  "443"
+      protocol:                              "HTTPS"
+      ssl_policy:                            <computed>
+        """.strip()), output)
 
     def test_create_security_group(self):
         # Given
@@ -166,37 +190,48 @@ class TestTFALB(unittest.TestCase):
         ]).decode('utf-8')
 
         # Then
-        assert """
-+ module.alb_test.aws_security_group.default
-    description:                           "Managed by Terraform"
-    egress.#:                              "1"
-    egress.482069346.cidr_blocks.#:        "1"
-    egress.482069346.cidr_blocks.0:        "0.0.0.0/0"
-    egress.482069346.from_port:            "0"
-    egress.482069346.ipv6_cidr_blocks.#:   "0"
-    egress.482069346.prefix_list_ids.#:    "0"
-    egress.482069346.protocol:             "-1"
-    egress.482069346.security_groups.#:    "0"
-    egress.482069346.self:                 "false"
-    egress.482069346.to_port:              "0"
-    ingress.#:                             "2"
-    ingress.2214680975.cidr_blocks.#:      "1"
-    ingress.2214680975.cidr_blocks.0:      "0.0.0.0/0"
-    ingress.2214680975.from_port:          "80"
-    ingress.2214680975.ipv6_cidr_blocks.#: "0"
-    ingress.2214680975.protocol:           "tcp"
-    ingress.2214680975.security_groups.#:  "0"
-    ingress.2214680975.self:               "false"
-    ingress.2214680975.to_port:            "80"
-    ingress.2617001939.cidr_blocks.#:      "1"
-    ingress.2617001939.cidr_blocks.0:      "0.0.0.0/0"
-    ingress.2617001939.from_port:          "443"
-    ingress.2617001939.ipv6_cidr_blocks.#: "0"
-    ingress.2617001939.protocol:           "tcp"
-    ingress.2617001939.security_groups.#:  "0"
-    ingress.2617001939.self:               "false"
-    ingress.2617001939.to_port:            "443"
-    name:                                  "<computed>"
-    owner_id:                              "<computed>"
-    vpc_id:                                "vpc-2f09a348"
-        """.strip() in output
+        assert re.search(template_to_re("""
+      egress.#:                              "1"
+      egress.{ident}.cidr_blocks.#:        "1"
+      egress.{ident}.cidr_blocks.0:        "0.0.0.0/0"
+      egress.{ident}.description:          ""
+      egress.{ident}.from_port:            "0"
+      egress.{ident}.ipv6_cidr_blocks.#:   "0"
+      egress.{ident}.prefix_list_ids.#:    "0"
+      egress.{ident}.protocol:             "-1"
+      egress.{ident}.security_groups.#:    "0"
+      egress.{ident}.self:                 "false"
+      egress.{ident}.to_port:              "0"
+        """.strip()), output)
+
+        assert re.search(template_to_re("""
+      ingress.#:                             "2"
+      ingress.{ident}.cidr_blocks.#:      "1"
+      ingress.{ident}.cidr_blocks.0:      "0.0.0.0/0"
+      ingress.{ident}.description:        ""
+      ingress.{ident}.from_port:          "80"
+      ingress.{ident}.ipv6_cidr_blocks.#: "0"
+      ingress.{ident}.prefix_list_ids.#:  "0"
+      ingress.{ident}.protocol:           "tcp"
+      ingress.{ident}.security_groups.#:  "0"
+      ingress.{ident}.self:               "false"
+      ingress.{ident}.to_port:            "80"
+        """.strip()), output)
+
+        assert re.search(template_to_re("""
+      ingress.{ident}.cidr_blocks.#:      "1"
+      ingress.{ident}.cidr_blocks.0:      "0.0.0.0/0"
+      ingress.{ident}.description:        ""
+      ingress.{ident}.from_port:          "443"
+      ingress.{ident}.ipv6_cidr_blocks.#: "0"
+      ingress.{ident}.prefix_list_ids.#:  "0"
+      ingress.{ident}.protocol:           "tcp"
+      ingress.{ident}.security_groups.#:  "0"
+      ingress.{ident}.self:               "false"
+      ingress.{ident}.to_port:            "443"
+        """.strip()), output)
+
+        assert re.search(template_to_re("""
+      revoke_rules_on_delete:                "false"
+      vpc_id:                                "vpc-2f09a348"
+        """.strip()), output)

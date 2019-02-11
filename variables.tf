@@ -57,3 +57,8 @@ variable "idle_timeout" {
   type        = "string"
   default     = "60"
 }
+
+variable "run_data" {
+  description = "Used to switch off data resources when unit testing"
+  default     = true
+}

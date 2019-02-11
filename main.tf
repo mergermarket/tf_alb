@@ -1,6 +1,6 @@
 module "aws_acm_certificate_arn" {
-  source = "./modules/aws_acm_certificate_arn"
-
+  source      = "./modules/aws_acm_certificate_arn"
+  run_data    = "${var.run_data}"
   domain_name = "${var.certificate_domain_name}"
 }
 
